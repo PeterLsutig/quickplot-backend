@@ -1,10 +1,8 @@
 package eu.nasuta.controller;
 
-import eu.nasuta.model.IUser;
+import eu.nasuta.model.User;
 import eu.nasuta.repository.IUserRepository;
 import eu.nasuta.security.service.JsonWebTokenService;
-import eu.nasuta.security.service.TokenService;
-import lombok.Data;
 import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,7 +21,7 @@ public class UserController {
     JsonWebTokenService tokenService;
 
     @RequestMapping(method = RequestMethod.POST, value = "/signup")
-    public ResponseEntity<?> signUp(@RequestBody IUser user) {
+    public ResponseEntity<?> signUp(@RequestBody User user) {
         userRepository.save(user); //ToDo: check if user already exists
         System.out.println(user.toString());
         System.out.println("new User created: " + user.getUsername());
@@ -33,7 +31,7 @@ public class UserController {
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "auth")
-    public ResponseEntity<?> authenticate(@RequestBody IUser user) {
+    public ResponseEntity<?> authenticate(@RequestBody User user) {
         String token;
         try {
             token = tokenService.getToken(user.getUsername(), user.getPassword());

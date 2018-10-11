@@ -1,7 +1,7 @@
 package eu.nasuta.repository;
 
-import eu.nasuta.model.IUser;
+import eu.nasuta.model.User;
 import org.springframework.data.repository.CrudRepository;
 
-public interface IUserRepository extends CrudRepository<IUser,String> {
+public interface IUserRepository extends CrudRepository<User,String> {
 }

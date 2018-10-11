@@ -1,7 +1,7 @@
 package eu.nasuta.security.service;
 
 import eu.nasuta.exception.ServiceException;
-import eu.nasuta.model.IUser;
+import eu.nasuta.model.User;
 import eu.nasuta.repository.IUserRepository;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -31,7 +31,7 @@ public class JsonWebTokenService implements TokenService {
     public String getToken(String username, String password) {
         if (username == null || password == null) return null;
 
-        final IUser user = userRepository.findById(username).orElse(null);
+        final User user = userRepository.findById(username).orElse(null);
         if (user == null) throw new ServiceException("Authentication error", this.getClass().getName());
         Map<String, Object> tokenData = new HashMap<>();
         if (password.equals(user.getPassword())) {

@@ -1,14 +1,13 @@
 package eu.nasuta.controller;
 
 
-import eu.nasuta.model.IUser;
-import eu.nasuta.model.SingleNumericDataFile;
-import eu.nasuta.repository.SingleDataFileRepository;
+import eu.nasuta.dto.ColumnDTO;
+import eu.nasuta.model.DataSet;
+import eu.nasuta.model.User;
+import eu.nasuta.model.table.VarTable;
+import eu.nasuta.repository.DataSetRepository;
 import eu.nasuta.security.service.JsonWebTokenAuthenticationService;
-import eu.nasuta.service.JsonParserService;
 import eu.nasuta.service.ParserService;
-import eu.nasuta.utilities.PrintList;
-import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -22,6 +21,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 
 @CrossOrigin
@@ -29,95 +31,73 @@ import java.io.*;
 @RequestMapping("/api/fileupload")
 public class UploadController {
 
-    Logger logger = LoggerFactory.getLogger(UploadController.class);
+	private static final Logger logger = LoggerFactory.getLogger(UploadController.class);
 
-    @Autowired
-    SingleDataFileRepository sDataRepository;
+	private DataSetRepository dataSetRepository;
+	private ParserService parserService;
+	private JsonWebTokenAuthenticationService auth;
 
-    @Autowired
-    ParserService parserService;
+	@Autowired
+	public UploadController(DataSetRepository dataSetRepository, ParserService parserService, JsonWebTokenAuthenticationService auth) {
+		this.dataSetRepository = dataSetRepository;
+		this.parserService = parserService;
+		this.auth = auth;
+	}
 
-    @Autowired
-    JsonParserService jsonParserService;
 
-    @Autowired
-    JsonWebTokenAuthenticationService auth;
+	//for testing
+	@CrossOrigin(allowCredentials = "true")
+	@GetMapping("/hallo")
+	public ResponseEntity<?> hallo() {
+		JSONObject json = new JSONObject();
+		json.put("msg", "hallo");
+		return ResponseEntity.status(HttpStatus.OK).body(json.toJSONString());
+	}
 
-    //for testing
-    @CrossOrigin(allowCredentials = "true")
-    @GetMapping("/hallo")
-    public ResponseEntity<?> hallo(){
-        JSONObject json = new JSONObject();
-        json.put("msg","hallo");
-        return ResponseEntity.status(HttpStatus.OK).body(json.toJSONString());
-    }
+	@RequestMapping(method = RequestMethod.POST, value = "/xlsx/single")
+	public List<ColumnDTO> xlxsSingleFile(
+			@RequestParam("file") MultipartFile file,
+			@RequestParam("token") String token,
+			@RequestParam("name") String name,
+			@RequestParam("description") String description,
+			@RequestParam("uuid") String uuid,
+			@RequestParam("removeConstCols") boolean filterConstantCols) {
 
-    @RequestMapping(method = RequestMethod.POST, value = "/xlsx/single")
-    public ResponseEntity<?> xlxsSingleFile(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("token") String token,
-            @RequestParam("name") String name,
-            @RequestParam("description") String description,
-            @RequestParam("uuid") String uuid,
-            @RequestParam("removeConstCols") boolean filterConstantCols) {
+		User user = auth.getUserFromToken(auth.parseToken(token));
+		if (user == null) throw new RuntimeException("Du HUUUURENSOHN!");
+		System.out.println("upload by user " + user.toString());
+		String originalFileName = file.getOriginalFilename();
+		System.out.println(token);
+		Workbook wb;
+		try (InputStream in = file.getInputStream()){
+			wb = new XSSFWorkbook(in);
+		} catch (IOException e) {
+			logger.error("Failed to read in file as Excel sheet.", e);
+			throw new RuntimeException("Failed to read in file as Excel sheet.", e);
+		}
+		Sheet sheet = wb.getSheetAt(0);
 
-        IUser user = auth.getUserFromToken(auth.parseToken(token));
-        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(":(");
-        System.out.println("upload by user "+user.toString());
-        String orginalFileName = file.getOriginalFilename();
-        String fileLocation = null;
-        System.out.println(token);
+		VarTable<Object> table = parserService.parse(sheet, filterConstantCols);
+		DataSet data = new DataSet();
+		data.setName(name);
+		data.setDescription(description);
+		data.setOwner(user);
+		data.setFileName(originalFileName);
+		data.setUuid(UUID.fromString(uuid));
 
-        try {
-            InputStream in = file.getInputStream();
-            File currDir = new File(".");
-            String path = currDir.getAbsolutePath();
-            fileLocation = path.substring(0, path.length() - 1) + file.getOriginalFilename();
+		System.out.println(data);
+		dataSetRepository.save(data);
+		System.out.println(data.getUuid());
 
-            FileOutputStream f = new FileOutputStream(fileLocation);
-            int ch = 0;
-            while ((ch = in.read()) != -1) {
-                f.write(ch);
-            }
-            f.flush();
-            f.close();
 
-        } catch (FileNotFoundException e) {
-            logger.error("File not Found Error in xlxsSingleFile() [SecuredController]");
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("File Error");
-        } catch (IOException e) {
-            logger.error("File Upload error in xlxsSingleFile() [SecuredController]");
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("File Error");
-        }
 
-        Sheet sheet = null;
-        try {
-            FileInputStream fileInputStream = new FileInputStream(new File(fileLocation));
-            Workbook wb = new XSSFWorkbook(fileInputStream);
-            sheet = wb.getSheetAt(0);
-        } catch (FileNotFoundException e) {
-            logger.error("File not Found Error in xlxsSingleFile() [SecuredController]");
-            e.printStackTrace();
-        } catch (IOException e) {
-            logger.error("exel converting error in xlxsSingleFile() [SecuredController]");
-            e.printStackTrace();
-        }
+		List<ColumnDTO> columns = new ArrayList<>();
+		for (int i = 0; i < table.size(); i++) {
+			columns.add(new ColumnDTO(table.getColumnDescription(i).getName(), table.getColumn(i)));
+		}
 
-        SingleNumericDataFile data = parserService.parse(sheet,filterConstantCols);
-        data.setName(name);
-        data.setDescription(description);
-        data.setUsername(user.getUsername());
-        data.setOrginalFileName(orginalFileName);
-        data.setUuid(uuid);
 
-        PrintList.printSingleDataFile(data);
-        System.out.println(data.toString());
-        sDataRepository.save(data);
-        System.out.println(data.getUuid());
-        JSONArray json = jsonParserService.RawDataJson(data);
-        return new ResponseEntity<>(json.toJSONString(), HttpStatus.OK);
-    }
+		return columns;
+	}
 
 }

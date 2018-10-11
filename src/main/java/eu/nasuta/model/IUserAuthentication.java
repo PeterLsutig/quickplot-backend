@@ -9,10 +9,10 @@ public class IUserAuthentication implements Authentication {
 
     private static final long serialVersionUID = -7170337143687707450L;
 
-    private final IUser user;
+    private final User user;
     private boolean authenticated = true;
 
-    public IUserAuthentication(final IUser user) {
+    public IUserAuthentication(final User user) {
         this.user = user;
     }
 
@@ -51,7 +51,7 @@ public class IUserAuthentication implements Authentication {
         return user.getUsername();
     }
 
-    public IUser getUser() {
+    public User getUser() {
         return user;
     }
 }
