@@ -1,0 +1,25 @@
+target/
+
+### IntelliJ IDEA ###
+#Exclude .idea folder
+.idea/*
+*.iws
+*.iml
+*.ipr
+
+#Include s
+!.idea/.name
+!.idea/encodings.xml
+!.idea/misc.xml
+!.idea/codeStyles
+!.idea/copyright
+!.idea/dictionaries
+!.idea/fileTemplates
+!.idea/inspectionProfiles
+!.idea/runConfigurations
+
+### PROJECT ###
+logs
+
+#Do not commit dev specific profiles
+application-dev-*.yaml
