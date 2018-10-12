@@ -114,8 +114,10 @@ public class ParserService {
 		final List<ColumnDescription> columnDescriptions = columnMetaData.stream()
                 .map(cmd -> new ColumnDescription(cmd.name, typeToClass(cmd.cellType)))
 				.collect(Collectors.toList());
+		//transpose table to row based
+		List<List<Object>> transposedTable = transpose(table);
 
-		return new VarTable<>(columnDescriptions, table);
+		return new VarTable<>(columnDescriptions, transposedTable);
 	}
 
 	private String typeToClass(CellType cellType) {
@@ -130,6 +132,19 @@ public class ParserService {
 			default:
 				throw new IllegalArgumentException("Celltype `" + cellType + "` is not supported.");
 		}
+	}
+
+	static <T> List<List<T>> transpose(List<List<T>> table) {
+		List<List<T>> ret = new ArrayList<List<T>>();
+		final int N = table.get(0).size();
+		for (int i = 0; i < N; i++) {
+			List<T> col = new ArrayList<T>();
+			for (List<T> row : table) {
+				col.add(row.get(i));
+			}
+			ret.add(col);
+		}
+		return ret;
 	}
 
 }

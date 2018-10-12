@@ -16,12 +16,9 @@ public class VarTable<T> implements Iterable<List<T>> {
 
 	public VarTable(List<ColumnDescription> columnDescriptions, List<? extends List<T>> data) {
 		this.columnDescriptions = columnDescriptions;
-		List<List<T>> filteredData = new ArrayList<>();
-		for (int i =0; i < columnDescriptions.size(); i++){
-			filteredData.add(data.get(i).stream().filter(e->e != null).collect(Collectors.toList()));
-		}
-		this.data = new ArrayList<>(filteredData);
+		this.data = new ArrayList<>(data.stream().filter(row -> !row.contains(null)).collect(Collectors.toList()));
 	}
+
 
 	public ColumnDescription getColumnDescription(int index) {
 		return columnDescriptions.get(index);
@@ -63,7 +60,7 @@ public class VarTable<T> implements Iterable<List<T>> {
 
 	public JSONArray rawDataArray(){
 		return new JSONArray(){{
-			addAll(StreamUtils.zipWithIndex(data.stream())
+			addAll(StreamUtils.zipWithIndex(transpose(data).stream())
 					.peek(l->printList(l.getValue()))
 					.map(indexedList -> new RawData(
 							columnDescriptions.get((int) indexedList.getIndex()).getName(),
@@ -73,15 +70,29 @@ public class VarTable<T> implements Iterable<List<T>> {
 		}};
 	}
 
-	public void printTable(){
-		for (int i = 0; i< columnDescriptions.size(); i++){
-			System.out.println("col: "+ columnDescriptions.get(i).getName() +" type: " + columnDescriptions.get(i).getType());
-			printList(data.get(i));
+	private static <T> List<List<T>> transpose(List<List<T>> table) {
+		List<List<T>> ret = new ArrayList<List<T>>();
+		final int N = table.get(0).size();
+		for (int i = 0; i < N; i++) {
+			List<T> col = new ArrayList<T>();
+			for (List<T> row : table) {
+				col.add(row.get(i));
+			}
+			ret.add(col);
 		}
+		return ret;
+	}
+
+
+	public void printTable(){
+		System.out.print("[");
+		columnDescriptions.stream().map(cd->cd.getName()).forEach(name-> System.out.print(name+","));
+		System.out.println("]");
+		data.forEach(VarTable::printList);
 	}
 
 	private static void printList(List<?> list) {
-		StringJoiner stringJoiner = new StringJoiner("/", "[", "]");
+		StringJoiner stringJoiner = new StringJoiner("/\t", "[", "]");
 		for (Object thing : list) {
 			stringJoiner.add(String.valueOf(thing));
 		}
@@ -97,8 +108,7 @@ public class VarTable<T> implements Iterable<List<T>> {
 	}
 
 	public VarTable<Double> toNumericTable(){
-		//remove empty columns
-		List<List<T>> data = this.data;
+		List<List<T>> data = transpose(this.data);
 		List<List<Double>> res = new ArrayList<>();
 		List<ColumnDescription> resDescription = new ArrayList<>();
 		for (int i = 0; i < columnDescriptions.size(); i++) {
@@ -112,7 +122,7 @@ public class VarTable<T> implements Iterable<List<T>> {
 			resDescription.add(columnDescriptions.get(i));
 			res.add((List<Double>)data.get(i));
 		}
-		return new VarTable<Double>(resDescription,res);
+		return new VarTable<Double>(resDescription,transpose(res));
 	}
 
 }

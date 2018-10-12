@@ -73,6 +73,7 @@ public class UploadController {
 		}
 		Sheet sheet = wb.getSheetAt(0);
 		VarTable<Object> table = parserService.parse(sheet, filterConstantCols);
+		table.printTable();
 		DataSet data = new DataSet();
 		data.setData(table);
 		data.setName(name);
@@ -81,7 +82,6 @@ public class UploadController {
 		data.setFileName(originalFileName);
 		data.setUuid(UUID.fromString(uuid));
 		dataSetRepository.save(data);
-		System.out.println(data.getUuid());
 		return table.rawDataArray();
 	}
 
