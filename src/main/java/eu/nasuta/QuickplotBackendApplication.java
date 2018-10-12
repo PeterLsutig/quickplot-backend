@@ -1,5 +1,8 @@
 package eu.nasuta;
 
+import eu.nasuta.model.User;
+import eu.nasuta.repository.IUserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,23 +15,16 @@ import java.util.List;
 @SpringBootApplication
 public class QuickplotBackendApplication implements CommandLineRunner {
 
+    @Autowired
+    private IUserRepository userRepository;
+
     public static void main(String... args){
         SpringApplication.run(QuickplotBackendApplication.class);
     }
 
     @Override
     public void run(String... args) throws Exception {
+        userRepository.save(new User("wer","wer"));
     }
 
-    /*
-    @Bean
-    public CommonsRequestLoggingFilter requestLoggingFilter() {
-        CommonsRequestLoggingFilter loggingFilter = new CommonsRequestLoggingFilter();
-        loggingFilter.setIncludeClientInfo(true);
-        loggingFilter.setIncludeQueryString(true);
-        loggingFilter.setIncludePayload(true);
-        loggingFilter.setIncludeHeaders(false);
-        return loggingFilter;
-    }
-    */
 }

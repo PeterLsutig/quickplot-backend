@@ -23,15 +23,9 @@ public class ParserService {
 
 	public VarTable<Object> parse(Sheet sheet, boolean removeConstantCols) {
 
-//		List<Row> rows = new ArrayList<>();
-//		for (Row row : sheet) rows.add(row);
-//
-//		Row headerRow = rows.get(0);
-//		rows.remove(0);
-
 		class ColumnMetaData {
 			String name;
-			CellType cellType = CellType._NONE;
+			CellType cellType = null;
 			Object lastSeenValue = null;
 			boolean isConst = true;
 
@@ -40,7 +34,15 @@ public class ParserService {
 			}
 
 			public void setCellType(CellType cellType) {
-				if (this.cellType != null && !Objects.equals(this.cellType, cellType)) {
+				if (this.cellType != null
+                        && ( !Objects.equals(this.cellType, cellType)
+                && (
+                        (!Objects.equals(this.cellType, CellType.NUMERIC) && (!Objects.equals(this.cellType, CellType.FORMULA)))
+                        && (!Objects.equals(cellType, CellType.NUMERIC) && (!Objects.equals(cellType, CellType.FORMULA)))
+
+                        )
+                )
+                        ) {
 					throw new IllegalArgumentException("Column with name: `" + name + "` was set to type `" + this.cellType + "` which is different to `" + cellType + "`.");
 				}
 				this.cellType = cellType;
@@ -64,13 +66,12 @@ public class ParserService {
 		}
 
 		//column based table
-		rowIterator.forEachRemaining(row -> {
+        rowIterator.forEachRemaining(row -> {
 			int index = 0;
 			for (Cell cell : row) {
 				List<Object> column = table.get(index);
 				final ColumnMetaData metaData = columnMetaData.get(index);
 				final CellType type = cell.getCellTypeEnum();
-				metaData.setCellType(type);
 				Object value;
 				switch (type) {
 					case STRING:
@@ -90,7 +91,11 @@ public class ParserService {
 					default:
 						throw new RuntimeException("Unknown instance of CellType: " + type);
 				}
-				metaData.compareValue(value);
+				if (value != null) {
+				    metaData.compareValue(value);
+                    metaData.setCellType(type);
+
+                }
 				column.add(value);
 				index++;
 			}
@@ -107,7 +112,7 @@ public class ParserService {
 		}
 
 		final List<ColumnDescription> columnDescriptions = columnMetaData.stream()
-				.map(cmd -> new ColumnDescription(cmd.name, typeToClass(cmd.cellType)))
+                .map(cmd -> new ColumnDescription(cmd.name, typeToClass(cmd.cellType)))
 				.collect(Collectors.toList());
 
 		return new VarTable<>(columnDescriptions, table);
@@ -127,45 +132,5 @@ public class ParserService {
 		}
 	}
 
-//	List<ColumHeader> columHeaders = Streams.stream(firstRow.cellIterator())
-//			.filter(cell -> !cell.getStringCellValue().isEmpty())
-//			.map(cell -> new ColumHeader(cell.getStringCellValue(), cell.getColumnIndex(), null))
-//			.collect(Collectors.toList());
-//
-//		PrintList.printList(columHeaders.stream().map(ch -> ch.getColName()).collect(Collectors.toList()));
-//
-//	//filter blank rows (at the end of the file for example) //note all cols shall have same size and not be empty by definiton
-//	rows = rows.stream()
-//			.filter(row -> !(row.getCell(columHeaders.get(0).getColIndex()).getCellTypeEnum() == CellType.BLANK))
-//			.collect(Collectors.toList());
-//
-//	Map<String, List<Double>> dataMap = new HashMap<>();
-//		try {
-//		for (ColumHeader columHeader : columHeaders) {
-//			List<Double> stringColData = rows.stream()
-//					.map(row -> row.getCell(columHeader.getColIndex()))
-//					.map(Cell::getNumericCellValue)
-//					.collect(Collectors.toList());
-//			dataMap.put(columHeader.getColName(), stringColData);
-//		}
-//	} catch (Exception e) {
-//		System.out.println("tables does not contain only Numeric values!");
-//		throw new IllegalArgumentException();
-//	}
-//		if (removeConstantCols) {
-//		try {
-//			List<String> keysToRemove = new ArrayList<>();
-//			for (String colKey : dataMap.keySet())
-//				if (dataMap.get(colKey).stream().distinct().count() <= 1)
-//					keysToRemove.add(colKey);
-//			for (String key : keysToRemove) dataMap.remove(key);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			logger.error("removing zero cols error");
-//		}
-//	}
-//	SingleNumericDataFile singleNumericDataFile = new SingleNumericDataFile();
-//		singleNumericDataFile.setData(dataMap);
-//		return singleNumericDataFile;
 }
 

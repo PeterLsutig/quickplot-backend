@@ -8,6 +8,7 @@ import eu.nasuta.model.table.VarTable;
 import eu.nasuta.repository.DataSetRepository;
 import eu.nasuta.security.service.JsonWebTokenAuthenticationService;
 import eu.nasuta.service.ParserService;
+import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -55,7 +56,7 @@ public class UploadController {
 	}
 
 	@RequestMapping(method = RequestMethod.POST, value = "/xlsx/single")
-	public List<ColumnDTO> xlxsSingleFile(
+	public JSONArray xlxsSingleFile(
 			@RequestParam("file") MultipartFile file,
 			@RequestParam("token") String token,
 			@RequestParam("name") String name,
@@ -64,10 +65,10 @@ public class UploadController {
 			@RequestParam("removeConstCols") boolean filterConstantCols) {
 
 		User user = auth.getUserFromToken(auth.parseToken(token));
+        System.out.println("uuid " +uuid);
+        System.out.println(UUID.fromString(uuid));
 		if (user == null) throw new RuntimeException("Du HUUUURENSOHN!");
-		System.out.println("upload by user " + user.toString());
 		String originalFileName = file.getOriginalFilename();
-		System.out.println(token);
 		Workbook wb;
 		try (InputStream in = file.getInputStream()){
 			wb = new XSSFWorkbook(in);
@@ -76,28 +77,17 @@ public class UploadController {
 			throw new RuntimeException("Failed to read in file as Excel sheet.", e);
 		}
 		Sheet sheet = wb.getSheetAt(0);
-
 		VarTable<Object> table = parserService.parse(sheet, filterConstantCols);
 		DataSet data = new DataSet();
+		data.setData(table);
 		data.setName(name);
 		data.setDescription(description);
 		data.setOwner(user);
 		data.setFileName(originalFileName);
 		data.setUuid(UUID.fromString(uuid));
-
-		System.out.println(data);
 		dataSetRepository.save(data);
 		System.out.println(data.getUuid());
-
-
-
-		List<ColumnDTO> columns = new ArrayList<>();
-		for (int i = 0; i < table.size(); i++) {
-			columns.add(new ColumnDTO(table.getColumnDescription(i).getName(), table.getColumn(i)));
-		}
-
-
-		return columns;
+		return table.rawDataArray();
 	}
 
 }
