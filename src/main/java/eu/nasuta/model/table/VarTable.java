@@ -5,11 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.minidev.json.JSONArray;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
+
 
 public class VarTable<T> implements Iterable<List<T>> {
 
@@ -88,6 +86,33 @@ public class VarTable<T> implements Iterable<List<T>> {
 			stringJoiner.add(String.valueOf(thing));
 		}
 		System.out.println(stringJoiner);
+	}
+
+	public boolean contains (String curve){
+		return columnDescriptions.stream().parallel().map(ch->ch.getName()).anyMatch(colname ->Objects.equals(colname,curve));
+	}
+
+	public boolean containsNumericCurve (String curve){
+		return columnDescriptions.stream().parallel().anyMatch(cd->Objects.equals(cd, new ColumnDescription(curve,"Double")));
+	}
+
+	public VarTable<Double> toNumericTable(){
+		//remove empty columns
+		List<List<T>> data = this.data;
+		List<List<Double>> res = new ArrayList<>();
+		List<ColumnDescription> resDescription = new ArrayList<>();
+		for (int i = 0; i < columnDescriptions.size(); i++) {
+			ColumnDescription cd = columnDescriptions.get(i);
+			if (!Objects.equals(cd.getType(),"Double")) {
+				columnDescriptions.remove(i);
+				data.remove(i);
+				i--;
+				continue;
+			}
+			resDescription.add(columnDescriptions.get(i));
+			res.add((List<Double>)data.get(i));
+		}
+		return new VarTable<Double>(resDescription,res);
 	}
 
 }

@@ -118,15 +118,15 @@ public class ParserService {
 		return new VarTable<>(columnDescriptions, table);
 	}
 
-	private Class<?> typeToClass(CellType cellType) {
+	private String typeToClass(CellType cellType) {
 		switch (cellType) {
 			case FORMULA:
 			case NUMERIC:
-				return Double.class;
+				return "Double";
 			case STRING:
-				return String.class;
+				return "String";
 			case BOOLEAN:
-				return Boolean.class;
+				return "Boolean";
 			default:
 				throw new IllegalArgumentException("Celltype `" + cellType + "` is not supported.");
 		}

@@ -1,7 +1,6 @@
 package eu.nasuta.controller;
 
 
-import eu.nasuta.dto.ColumnDTO;
 import eu.nasuta.model.DataSet;
 import eu.nasuta.model.User;
 import eu.nasuta.model.table.VarTable;
@@ -22,8 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 
@@ -65,9 +62,7 @@ public class UploadController {
 			@RequestParam("removeConstCols") boolean filterConstantCols) {
 
 		User user = auth.getUserFromToken(auth.parseToken(token));
-        System.out.println("uuid " +uuid);
-        System.out.println(UUID.fromString(uuid));
-		if (user == null) throw new RuntimeException("Du HUUUURENSOHN!");
+		if (user == null) throw new RuntimeException("Unauthorised");
 		String originalFileName = file.getOriginalFilename();
 		Workbook wb;
 		try (InputStream in = file.getInputStream()){

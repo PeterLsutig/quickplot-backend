@@ -2,9 +2,9 @@ package eu.nasuta.model.table;
 
 public class ColumnDescription {
 	private final String name;
-	private final Class<?> type;
+	private final String type;
 
-	public ColumnDescription(String name, Class<?> type) {
+	public ColumnDescription(String name, String type) {
 		this.name = name;
 		this.type = type;
 	}
@@ -13,7 +13,8 @@ public class ColumnDescription {
 		return name;
 	}
 
-	public Class<?> getType() {
+	public String getType() {
 		return type;
 	}
+
 }
