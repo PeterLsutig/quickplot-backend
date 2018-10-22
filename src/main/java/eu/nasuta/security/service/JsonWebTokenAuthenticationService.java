@@ -1,8 +1,8 @@
 package eu.nasuta.security.service;
 
 import eu.nasuta.model.User;
-import eu.nasuta.model.IUserAuthentication;
-import eu.nasuta.repository.IUserRepository;
+import eu.nasuta.model.UserAuthentication;
+import eu.nasuta.repository.UserRepository;
 import eu.nasuta.security.SecurityConstants;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 public class JsonWebTokenAuthenticationService implements TokenAuthenticationService {
 
     @Autowired
-    IUserRepository userRepository;
+    UserRepository userRepository;
 
     @Value("${security.token.secret.key}")
     private String secretKey;
@@ -28,7 +28,7 @@ public class JsonWebTokenAuthenticationService implements TokenAuthenticationSer
         if (tokenData != null) {
             User user = getUserFromToken(tokenData);
             if (user != null) {
-                return new IUserAuthentication(user);
+                return new UserAuthentication(user);
             }
         }
         return null;

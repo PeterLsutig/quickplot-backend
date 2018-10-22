@@ -1,7 +1,7 @@
 package eu.nasuta.controller;
 
 import eu.nasuta.model.User;
-import eu.nasuta.repository.IUserRepository;
+import eu.nasuta.repository.UserRepository;
 import eu.nasuta.security.service.JsonWebTokenService;
 import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     @Autowired
-    IUserRepository userRepository;
+    UserRepository userRepository;
 
     @Autowired
     JsonWebTokenService tokenService;
@@ -26,7 +26,7 @@ public class UserController {
         System.out.println(user.toString());
         System.out.println("new User created: " + user.getUsername());
         JSONObject json = new JSONObject();
-        json.put("msg","asd");
+        json.put("msg","user "+ user.getUsername() +"successfully created.");
         return new ResponseEntity<>(json, HttpStatus.OK);
     }
 

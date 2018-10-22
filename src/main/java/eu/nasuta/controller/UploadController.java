@@ -58,8 +58,7 @@ public class UploadController {
 			@RequestParam("token") String token,
 			@RequestParam("name") String name,
 			@RequestParam("description") String description,
-			@RequestParam("uuid") String uuid,
-			@RequestParam("removeConstCols") boolean filterConstantCols) {
+			@RequestParam("uuid") String uuid) {
 
 		User user = auth.getUserFromToken(auth.parseToken(token));
 		if (user == null) throw new RuntimeException("Unauthorised");
@@ -72,7 +71,7 @@ public class UploadController {
 			throw new RuntimeException("Failed to read in file as Excel sheet.", e);
 		}
 		Sheet sheet = wb.getSheetAt(0);
-		VarTable<Object> table = parserService.parse(sheet, filterConstantCols);
+		VarTable<Object> table = parserService.parse(sheet);
 		table.printTable();
 		DataSet data = new DataSet();
 		data.setData(table);

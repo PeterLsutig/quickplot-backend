@@ -1,6 +1,7 @@
 package eu.nasuta.model.table;
 
 import com.codepoetics.protonpack.StreamUtils;
+import eu.nasuta.util.QuickplotUtilities;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.minidev.json.JSONArray;
@@ -60,8 +61,7 @@ public class VarTable<T> implements Iterable<List<T>> {
 
 	public JSONArray rawDataArray(){
 		return new JSONArray(){{
-			addAll(StreamUtils.zipWithIndex(transpose(data).stream())
-					.peek(l->printList(l.getValue()))
+			addAll(StreamUtils.zipWithIndex(QuickplotUtilities.transpose(data).stream())
 					.map(indexedList -> new RawData(
 							columnDescriptions.get((int) indexedList.getIndex()).getName(),
 							indexedList.getValue()
@@ -70,33 +70,12 @@ public class VarTable<T> implements Iterable<List<T>> {
 		}};
 	}
 
-	private static <T> List<List<T>> transpose(List<List<T>> table) {
-		List<List<T>> ret = new ArrayList<List<T>>();
-		final int N = table.get(0).size();
-		for (int i = 0; i < N; i++) {
-			List<T> col = new ArrayList<T>();
-			for (List<T> row : table) {
-				col.add(row.get(i));
-			}
-			ret.add(col);
-		}
-		return ret;
-	}
-
 
 	public void printTable(){
 		System.out.print("[");
 		columnDescriptions.stream().map(cd->cd.getName()).forEach(name-> System.out.print(name+","));
 		System.out.println("]");
-		data.forEach(VarTable::printList);
-	}
-
-	private static void printList(List<?> list) {
-		StringJoiner stringJoiner = new StringJoiner("/\t", "[", "]");
-		for (Object thing : list) {
-			stringJoiner.add(String.valueOf(thing));
-		}
-		System.out.println(stringJoiner);
+		data.forEach(QuickplotUtilities::printList);
 	}
 
 	public boolean contains (String curve){
@@ -108,7 +87,7 @@ public class VarTable<T> implements Iterable<List<T>> {
 	}
 
 	public VarTable<Double> toNumericTable(){
-		List<List<T>> data = transpose(this.data);
+		List<List<T>> data = QuickplotUtilities.transpose(this.data);
 		List<List<Double>> res = new ArrayList<>();
 		List<ColumnDescription> resDescription = new ArrayList<>();
 		for (int i = 0; i < columnDescriptions.size(); i++) {
@@ -122,7 +101,25 @@ public class VarTable<T> implements Iterable<List<T>> {
 			resDescription.add(columnDescriptions.get(i));
 			res.add((List<Double>)data.get(i));
 		}
-		return new VarTable<Double>(resDescription,transpose(res));
+		return new VarTable<Double>(resDescription,QuickplotUtilities.transpose(res));
+	}
+
+	public VarTable<Object> toMultiTable(String xAxis){
+		List<List<T>> data = QuickplotUtilities.transpose(this.data);
+		List<List<Object>> res = new ArrayList<>();
+		List<ColumnDescription> resDescription = new ArrayList<>();
+		for (int i = 0; i < columnDescriptions.size(); i++) {
+			ColumnDescription cd = columnDescriptions.get(i);
+			if (!Objects.equals(cd.getType(),"Double") && Objects.equals(cd.getName(),xAxis)) {
+				columnDescriptions.remove(i);
+				data.remove(i);
+				i--;
+				continue;
+			}
+			resDescription.add(columnDescriptions.get(i));
+			res.add((List<Object>)data.get(i));
+		}
+		return new VarTable<Object>(resDescription,QuickplotUtilities.transpose(res));
 	}
 
 }

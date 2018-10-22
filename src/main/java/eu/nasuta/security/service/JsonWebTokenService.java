@@ -2,7 +2,7 @@ package eu.nasuta.security.service;
 
 import eu.nasuta.exception.ServiceException;
 import eu.nasuta.model.User;
-import eu.nasuta.repository.IUserRepository;
+import eu.nasuta.repository.UserRepository;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -20,7 +20,7 @@ import java.util.Map;
 public class JsonWebTokenService implements TokenService {
 
     @Autowired
-    IUserRepository userRepository;
+    UserRepository userRepository;
 
     private static int tokenExpirationTime = 30;
 

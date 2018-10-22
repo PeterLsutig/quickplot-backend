@@ -2,6 +2,7 @@ package eu.nasuta.service;
 
 import eu.nasuta.model.table.ColumnDescription;
 import eu.nasuta.model.table.VarTable;
+import eu.nasuta.util.QuickplotUtilities;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -21,7 +22,7 @@ public class ParserService {
 
 	Logger logger = LoggerFactory.getLogger(ParserService.class);
 
-	public VarTable<Object> parse(Sheet sheet, boolean removeConstantCols) {
+	public VarTable<Object> parse(Sheet sheet) {
 
 		class ColumnMetaData {
 			String name;
@@ -115,7 +116,7 @@ public class ParserService {
                 .map(cmd -> new ColumnDescription(cmd.name, typeToClass(cmd.cellType)))
 				.collect(Collectors.toList());
 		//transpose table to row based
-		List<List<Object>> transposedTable = transpose(table);
+		List<List<Object>> transposedTable = QuickplotUtilities.transpose(table);
 
 		return new VarTable<>(columnDescriptions, transposedTable);
 	}
@@ -132,19 +133,6 @@ public class ParserService {
 			default:
 				throw new IllegalArgumentException("Celltype `" + cellType + "` is not supported.");
 		}
-	}
-
-	static <T> List<List<T>> transpose(List<List<T>> table) {
-		List<List<T>> ret = new ArrayList<List<T>>();
-		final int N = table.get(0).size();
-		for (int i = 0; i < N; i++) {
-			List<T> col = new ArrayList<T>();
-			for (List<T> row : table) {
-				col.add(row.get(i));
-			}
-			ret.add(col);
-		}
-		return ret;
 	}
 
 }
